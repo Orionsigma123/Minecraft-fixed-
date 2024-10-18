@@ -48,7 +48,7 @@ function generateWorld() {
 generateWorld();
 
 // Position the camera to be just above the ground
-camera.position.set(25, 1, 25); // Adjust height to be 2 blocks tall
+camera.position.set(25, 0.4, 25); // Adjust height to be 2 blocks tall
 
 // Player controls
 const playerSpeed = 0.1;
