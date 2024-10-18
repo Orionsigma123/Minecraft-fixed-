@@ -75,11 +75,27 @@ window.addEventListener('keyup', (event) => {
     keys[event.code] = false;
 });
 
+// Create a DOM element for update notification
+const updateNotification = document.createElement('div');
+updateNotification.style.position = 'absolute';
+updateNotification.style.bottom = '20px';
+updateNotification.style.left = '20px';
+updateNotification.style.color = 'white';
+updateNotification.style.fontSize = '20px';
+updateNotification.textContent = '';
+document.body.appendChild(updateNotification);
+
 // Function to simulate block breaking and add to inventory
 function breakBlock(block) {
     const blockPosition = block.userData; // Get block position
     addToInventory({ name: 'Grass Block', texture: grassTexture }); // Add block to inventory
     scene.remove(block); // Remove block from scene
+
+    // Update the notification
+    updateNotification.textContent = 'Update worked';
+    setTimeout(() => {
+        updateNotification.textContent = ''; // Clear the notification after a short duration
+    }, 2000);
 }
 
 // Function to get the block under the crosshair (not mouse pointer)
@@ -221,4 +237,4 @@ function animate() {
 }
 
 // Start animation
-animate();
+animate(); 
