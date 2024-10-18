@@ -17,8 +17,8 @@ const inventory = [];
 // Generate a simple block world using Perlin noise
 let blockSize = 1;
 let renderDistance = 16; // Initial render distance
-const worldWidth = 64; // Increased world size
-const worldHeight = 64; // Increased world size
+const worldWidth = 200; // Increased world size
+const worldHeight = 204; // Increased world size
 const noiseScale = 0.1; // Adjust for terrain smoothness
 const simplex = new SimplexNoise();
 
