@@ -21,9 +21,6 @@ const chunkSize = 16;
 let currentChunk = { x: 0, z: 0 };
 const loadedChunks = new Set();
 
-// Block-breaking logic
-const blockBreakingCrackTexture = new THREE.TextureLoader().load('textures/crack.png');
-
 // Function to create a block
 function createBlock(x, y, z, texture) {
     const geometry = new THREE.BoxGeometry(blockSize, blockSize, blockSize);
@@ -53,14 +50,16 @@ function createTree(x, y, z) {
     }
 }
 
-// Function to fill water in empty spaces
-function fillWithWater(x, z) {
-    for (let y = -5; y < 0; y++) { // Fill water from y = -5 to y = 0
-        createBlock(x, y, z, waterTexture);
+// Function to fill water based on noise value
+function addWater(x, z, noiseValue) {
+    if (noiseValue < -0.2) { // Add water if noise value is below a certain threshold (adjust as needed)
+        for (let y = Math.floor(noiseValue * 5); y < 0; y++) {
+            createBlock(x, y, z, waterTexture);
+        }
     }
 }
 
-// Function to generate a chunk
+// Function to generate a chunk with water and terrain
 function generateChunk(chunkX, chunkZ) {
     const chunkKey = `${chunkX},${chunkZ}`;
     if (loadedChunks.has(chunkKey)) return; // Don't generate the same chunk twice
@@ -68,16 +67,21 @@ function generateChunk(chunkX, chunkZ) {
 
     for (let x = chunkX * chunkSize; x < (chunkX + 1) * chunkSize; x++) {
         for (let z = chunkZ * chunkSize; z < (chunkZ + 1) * chunkSize; z++) {
-            const height = Math.floor(simplex.noise2D(x * noiseScale, z * noiseScale) * 5);
+            const noiseValue = simplex.noise2D(x * noiseScale, z * noiseScale);
+            const height = Math.floor(noiseValue * 5);
+
+            // Generate terrain blocks
             for (let y = 0; y <= height; y++) {
                 createBlock(x, y, z, grassTexture);
             }
+
+            // Randomly place trees
             if (Math.random() < 0.1) {
                 createTree(x, height + 1, z);
             }
-            if (height < 0) {
-                fillWithWater(x, z); // Fill with water below a certain height
-            }
+
+            // Add water in areas where the noise value is below the threshold (valleys or dark areas)
+            addWater(x, z, noiseValue);
         }
     }
 }
@@ -96,27 +100,6 @@ function updateChunks() {
                 generateChunk(playerChunkX + dx, playerChunkZ + dz);
             }
         }
-    }
-}
-
-// Function to break blocks under the crosshair
-function breakBlockUnderCrosshair() {
-    const raycaster = new THREE.Raycaster();
-    const direction = new THREE.Vector3();
-    camera.getWorldDirection(direction); // Cast a ray from the center of the screen
-    raycaster.set(camera.position, direction);
-    
-    const intersects = raycaster.intersectObjects(scene.children);
-    if (intersects.length > 0) {
-        const selectedBlock = intersects[0].object;
-
-        // Apply crack texture on block before breaking it
-        const crackMaterial = new THREE.MeshBasicMaterial({ map: blockBreakingCrackTexture });
-        selectedBlock.material = crackMaterial;
-
-        setTimeout(() => {
-            scene.remove(selectedBlock); // Remove the block after showing cracks
-        }, 200); // Delay to simulate block-breaking time
     }
 }
 
@@ -198,13 +181,6 @@ function updatePlayer() {
 
     updateChunks(); // Load new chunks if necessary
 }
-
-// Handle breaking blocks
-window.addEventListener('mousedown', (event) => {
-    if (event.button === 0) {
-        breakBlockUnderCrosshair(); // Break block when clicking
-    }
-});
 
 // Handle window resizing
 window.addEventListener('resize', () => {
