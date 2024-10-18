@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mine-Freak - Inventory</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #87CEEB; /* Sky blue background */
+        }
+
+        #inventoryContainer {
+            display: none; /* Inventory is hidden by default */
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px;
+            height: 300px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+            z-index: 10;
+        }
+
+        #inventoryGrid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-gap: 10px;
+        }
+
+        .inventorySlot {
+            width: 60px;
+            height: 60px;
+            border: 2px solid #333;
+            background-color: #ddd;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        #closeButton {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #ff5b5b;
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 3px;
+        }
+
+        #closeButton:hover {
+            background-color: #ff3333;
+        }
+
+        #inventoryMessage {
+            text-align: center;
+            margin-top: 20px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Inventory Container -->
+    <div id="inventoryContainer">
+        <button id="closeButton">Close</button>
+        <h3>Your Inventory</h3>
+        <div id="inventoryGrid">
+            <!-- Inventory slots will be added dynamically here -->
+        </div>
+        <p id="inventoryMessage">Click on a block to select it!</p>
+    </div>
+
+    <script>
+        const inventoryContainer = document.getElementById('inventoryContainer');
+        const inventoryGrid = document.getElementById('inventoryGrid');
+        const closeButton = document.getElementById('closeButton');
+        const inventory = [];
+
+        // Function to toggle inventory visibility
+        function toggleInventory() {
+            if (inventoryContainer.style.display === 'none') {
+                inventoryContainer.style.display = 'block';
+            } else {
+                inventoryContainer.style.display = 'none';
+            }
+        }
+
+        // Close inventory button
+        closeButton.addEventListener('click', () => {
+            inventoryContainer.style.display = 'none';
+        });
+
+        // Event listener to open/close the inventory using the "E" key
+        document.addEventListener('keydown', (event) => {
+            if (event.code === 'KeyE') {
+                toggleInventory();
+            }
+        });
+
+        // Function to render inventory slots
+        function renderInventory() {
+            inventoryGrid.innerHTML = ''; // Clear previous inventory grid
+
+            // Create 25 empty slots for the inventory
+            for (let i = 0; i < 25; i++) {
+                const slot = document.createElement('div');
+                slot.classList.add('inventorySlot');
+                slot.dataset.index = i;
+
+                // If there is an item in the inventory at this index, display it
+                if (inventory[i]) {
+                    slot.textContent = inventory[i].name; // Display the block name
+                }
+
+                // Event listener to handle clicking on an inventory slot
+                slot.addEventListener('click', () => {
+                    selectBlock(i);
+                });
+
+                inventoryGrid.appendChild(slot);
+            }
+        }
+
+        // Function to add block to inventory
+        function addToInventory(block) {
+            const emptySlot = inventory.findIndex(item => item === undefined); // Find first empty slot
+            if (emptySlot !== -1) {
+                inventory[emptySlot] = block; // Add block to inventory
+                renderInventory(); // Update the inventory UI
+            }
+        }
+
+        // Function to select a block from the inventory
+        function selectBlock(index) {
+            if (inventory[index]) {
+                console.log(`Selected block: ${inventory[index].name}`);
+                // Add logic here to place the selected block in the game
+            }
+        }
+
+        // Sample blocks to add to inventory (in your game, this would come from the player's actions)
+        const block1 = { name: 'Grass Block', texture: 'textures/grass.png' };
+        const block2 = { name: 'Stone Block', texture: 'textures/stone.png' };
+        const block3 = { name: 'Wood Block', texture: 'textures/wood.png' };
+
+        // Adding blocks to the inventory for demonstration
+        addToInventory(block1);
+        addToInventory(block2);
+        addToInventory(block3);
+
+        // Render the inventory for the first time
+        renderInventory();
+    </script>
+</body>
+</html>
