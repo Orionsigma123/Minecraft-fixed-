@@ -13,56 +13,32 @@ const grassTexture = new THREE.TextureLoader().load('textures/grass.png');
 const treeTexture = new THREE.TextureLoader().load('textures/tree.png');
 const waterTexture = new THREE.TextureLoader().load('textures/water.png');
 
-// Inventory
-const inventory = [];
-
-// Constants for chunk-based world generation
+// Constants for block size and chunk generation
+const blockSize = 1;
 const chunkSize = 16;
+const renderDistance = 3; // Number of chunks to load around the player
+const noiseScale = 0.1; // Scale of Perlin noise
+const simplex = new SimplexNoise();
+
+// Player position tracking
 let currentChunk = { x: 0, z: 0 };
 const loadedChunks = new Set();
 
-// Function to create a block
+// Function to create a block and add it to the scene
 function createBlock(x, y, z, texture) {
     const geometry = new THREE.BoxGeometry(blockSize, blockSize, blockSize);
     const material = new THREE.MeshBasicMaterial({ map: texture });
     const block = new THREE.Mesh(geometry, material);
     block.position.set(x * blockSize, y * blockSize, z * blockSize);
     scene.add(block);
+    console.log(`Block created at (${x}, ${y}, ${z})`);
     return block;
 }
 
-// Function to create a tree (square leaves)
-function createTree(x, y, z) {
-    // Trunk
-    for (let i = 0; i < 3; i++) {
-        createBlock(x, y + i, z, treeTexture);
-    }
-
-    // Leaves (square-shaped, like everything else)
-    for (let i = -1; i <= 1; i++) {
-        for (let j = 3; j <= 4; j++) {
-            for (let k = -1; k <= 1; k++) {
-                if (i !== 0 || j !== 3 || k !== 0) { // Leave the center top block empty
-                    createBlock(x + i, y + j, z + k, grassTexture); // Using grass texture for leaves
-                }
-            }
-        }
-    }
-}
-
-// Function to fill water based on noise value
-function addWater(x, z, noiseValue) {
-    if (noiseValue < -0.2) { // Add water if noise value is below a certain threshold (adjust as needed)
-        for (let y = Math.floor(noiseValue * 5); y < 0; y++) {
-            createBlock(x, y, z, waterTexture);
-        }
-    }
-}
-
-// Function to generate a chunk with water and terrain
+// Function to generate terrain and water
 function generateChunk(chunkX, chunkZ) {
     const chunkKey = `${chunkX},${chunkZ}`;
-    if (loadedChunks.has(chunkKey)) return; // Don't generate the same chunk twice
+    if (loadedChunks.has(chunkKey)) return; // Skip if chunk already loaded
     loadedChunks.add(chunkKey);
 
     for (let x = chunkX * chunkSize; x < (chunkX + 1) * chunkSize; x++) {
@@ -70,46 +46,51 @@ function generateChunk(chunkX, chunkZ) {
             const noiseValue = simplex.noise2D(x * noiseScale, z * noiseScale);
             const height = Math.floor(noiseValue * 5);
 
-            // Generate terrain blocks
+            // Generate terrain blocks (grass)
             for (let y = 0; y <= height; y++) {
                 createBlock(x, y, z, grassTexture);
             }
 
+            // Add water where the noise is low
+            if (noiseValue < -0.2) {
+                for (let y = height; y < 0; y++) {
+                    createBlock(x, y, z, waterTexture);
+                }
+            }
+
             // Randomly place trees
-            if (Math.random() < 0.1) {
+            if (Math.random() < 0.1 && height > 0) {
                 createTree(x, height + 1, z);
             }
-
-            // Add water in areas where the noise value is below the threshold (valleys or dark areas)
-            addWater(x, z, noiseValue);
         }
     }
+    console.log(`Chunk generated: (${chunkX}, ${chunkZ})`);
 }
 
-// Function to handle chunk loading when player moves into a new chunk
-function updateChunks() {
-    const playerChunkX = Math.floor(camera.position.x / chunkSize);
-    const playerChunkZ = Math.floor(camera.position.z / chunkSize);
-    if (playerChunkX !== currentChunk.x || playerChunkZ !== currentChunk.z) {
-        currentChunk.x = playerChunkX;
-        currentChunk.z = playerChunkZ;
-        generateChunk(playerChunkX, playerChunkZ);
-        // Generate surrounding chunks
-        for (let dx = -1; dx <= 1; dx++) {
-            for (let dz = -1; dz <= 1; dz++) {
-                generateChunk(playerChunkX + dx, playerChunkZ + dz);
+// Function to create a tree (basic square blocks for trunk and leaves)
+function createTree(x, y, z) {
+    // Trunk
+    for (let i = 0; i < 3; i++) {
+        createBlock(x, y + i, z, treeTexture);
+    }
+
+    // Leaves (square-shaped)
+    for (let i = -1; i <= 1; i++) {
+        for (let j = 3; j <= 4; j++) {
+            for (let k = -1; k <= 1; k++) {
+                createBlock(x + i, y + j, z + k, grassTexture);
             }
         }
     }
 }
 
-// Lock the pointer
+// Lock the pointer to the center of the screen
 function lockPointer() {
     document.body.requestPointerLock();
 }
 document.body.addEventListener('click', lockPointer);
 
-// Crosshair element
+// Crosshair element for visual indication
 const crosshair = document.createElement('div');
 crosshair.style.position = 'absolute';
 crosshair.style.width = '10px';
@@ -121,13 +102,13 @@ crosshair.style.top = '50%';
 crosshair.style.pointerEvents = 'none';
 document.body.appendChild(crosshair);
 
-// Player controls
+// Player movement and control setup
 const playerSpeed = 0.1;
 let velocity = new THREE.Vector3(0, 0, 0);
 let isJumping = false;
 const keys = {};
 
-// Keyboard events for movement
+// Keyboard input events
 window.addEventListener('keydown', (event) => {
     keys[event.code] = true;
 });
@@ -149,7 +130,7 @@ document.addEventListener('mousemove', (event) => {
     }
 });
 
-// Update player position and chunks
+// Function to update player position and load chunks dynamically
 function updatePlayer() {
     velocity.set(0, 0, 0);
 
@@ -179,7 +160,23 @@ function updatePlayer() {
     camera.position.z += direction.z * -velocity.z;
     camera.position.y += velocity.y;
 
-    updateChunks(); // Load new chunks if necessary
+    updateChunks();
+}
+
+// Function to load new chunks as the player moves
+function updateChunks() {
+    const playerChunkX = Math.floor(camera.position.x / chunkSize);
+    const playerChunkZ = Math.floor(camera.position.z / chunkSize);
+    if (playerChunkX !== currentChunk.x || playerChunkZ !== currentChunk.z) {
+        currentChunk.x = playerChunkX;
+        currentChunk.z = playerChunkZ;
+
+        for (let dx = -renderDistance; dx <= renderDistance; dx++) {
+            for (let dz = -renderDistance; dz <= renderDistance; dz++) {
+                generateChunk(playerChunkX + dx, playerChunkZ + dz);
+            }
+        }
+    }
 }
 
 // Handle window resizing
@@ -189,12 +186,15 @@ window.addEventListener('resize', () => {
     camera.updateProjectionMatrix();
 });
 
+// Initial camera position (start above ground to see blocks)
+camera.position.set(0, 10, 0);
+
 // Animation loop
 function animate() {
     requestAnimationFrame(animate);
-    updatePlayer(); // Update player movement
+    updatePlayer();
     renderer.render(scene, camera);
 }
 
-// Start animation
+// Start animation loop
 animate();
