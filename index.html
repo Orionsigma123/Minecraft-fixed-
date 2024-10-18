@@ -13,9 +13,18 @@
         canvas {
             display: block; /* Remove margins around the canvas */
         }
-        #renderDistanceUI {
+        #title {
             position: absolute;
             top: 20px;
+            right: 20px; /* Position it to the top right */
+            color: white; /* Text color */
+            font-size: 32px; /* Font size */
+            font-family: Arial, sans-serif; /* Default font */
+            text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.7); /* Optional: Adds a shadow for better readability */
+        }
+        #renderDistanceUI {
+            position: absolute;
+            top: 80px; /* Adjusted to avoid overlap with title */
             left: 20px;
             z-index: 10;
             background-color: rgba(255, 255, 255, 0.8);
@@ -23,62 +32,13 @@
             border-radius: 5px;
             font-family: Arial, sans-serif;
         }
-        #initialPrompt {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: rgba(255, 255, 255, 0.9);
-            padding: 20px;
-            border-radius: 10px;
-            z-index: 20;
-            display: none; /* Hide initially */
-        }
-        .button {
-            display: block;
-            margin: 10px 0;
-            padding: 10px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .button:hover {
-            background-color: #0056b3;
-        }
-        #joystick {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            width: 100px;
-            height: 100px;
-            background-color: rgba(0, 0, 0, 0.5);
-            border-radius: 50%;
-            display: none; /* Hidden initially */
-            justify-content: center;
-            align-items: center;
-        }
     </style>
 </head>
 <body>
-    <!-- Render Distance Slider UI -->
+    <div id="title">Alpha-1</div> <!-- Title text -->
     <div id="renderDistanceUI">
         <label for="renderDistance">Render Distance: <span id="renderDistanceValue">16</span> chunks</label><br>
         <input type="range" id="renderDistance" min="1" max="32" value="16" step="1">
-    </div>
-
-    <!-- Initial Prompt -->
-    <div id="initialPrompt">
-        <p>Are you on a computer?</p>
-        <button class="button" id="yesButton">Yes</button>
-        <button class="button" id="noButton">No</button>
-    </div>
-
-    <!-- Joystick -->
-    <div id="joystick">
-        <!-- Joystick UI goes here -->
-        <p>Joystick Placeholder</p>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
