@@ -10,9 +10,11 @@ renderer.setClearColor(0x87CEEB, 1); // Sky blue color
 
 // Textures
 const grassTexture = new THREE.TextureLoader().load('textures/grass.png'); // Replace with your grass texture path 
+const treeTexture = new THREE.TextureLoader().load('textures/tree.png'); // Replace with your tree texture path
 
 // Inventory
 const inventory = [];
+let inventoryVisible = false;
 
 // Generate a simple block world using Perlin noise
 let blockSize = 1;
@@ -31,6 +33,22 @@ function createBlock(x, y, z, texture) {
     scene.add(block);
 }
 
+// Function to create a tree
+function createTree(x, y, z) {
+    const trunkGeometry = new THREE.BoxGeometry(blockSize / 2, blockSize, blockSize / 2);
+    const trunkMaterial = new THREE.MeshBasicMaterial({ map: treeTexture });
+    const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+    trunk.position.set(x * blockSize, y * blockSize + blockSize / 2, z * blockSize);
+    scene.add(trunk);
+
+    // Create leaves
+    const leavesGeometry = new THREE.SphereGeometry(blockSize, 8, 8);
+    const leavesMaterial = new THREE.MeshBasicMaterial({ color: 0x228B22 });
+    const leaves = new THREE.Mesh(leavesGeometry, leavesMaterial);
+    leaves.position.set(x * blockSize, y * blockSize + blockSize + blockSize / 2, z * blockSize);
+    scene.add(leaves);
+}
+
 // Function to generate the world
 function generateWorld() {
     for (let x = -renderDistance; x <= renderDistance; x++) {
@@ -38,6 +56,10 @@ function generateWorld() {
             const height = Math.floor(simplex.noise2D(x * noiseScale, z * noiseScale) * 5);
             for (let y = 0; y <= height; y++) {
                 createBlock(x, y, z, grassTexture); // Use grass texture for blocks
+            }
+            // Randomly place trees
+            if (Math.random() < 0.2) { // Adjust probability for more or fewer trees
+                createTree(x, height + 1, z); // Place tree at top of grass
             }
         }
     }
@@ -70,6 +92,8 @@ window.addEventListener('mousedown', (event) => {
     if (event.button === 0) { // Left mouse button
         mousePressed = true;
         selectedBlock = getBlockUnderCursor(); // Get the block under the cursor
+    } else if (event.button === 2 && inventoryVisible) { // Right click to place block from inventory
+        placeBlock();
     }
 });
 
@@ -97,6 +121,39 @@ function getBlockUnderCursor() {
     const intersects = raycaster.intersectObjects(scene.children);
 
     return intersects.length > 0 ? intersects[0].object : null; // Return the block if intersected
+}
+
+// Function to place a block from inventory
+function placeBlock() {
+    if (inventory.length > 0) {
+        const blockTexture = inventory[inventory.length - 1]; // Get the last item in the inventory
+        const position = getPlacementPosition();
+        if (position) {
+            createBlock(position.x, position.y, position.z, blockTexture); // Place block
+            inventory.pop(); // Remove block from inventory
+        }
+    }
+}
+
+// Function to get the position for block placement
+function getPlacementPosition() {
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObjects(scene.children);
+
+    if (intersects.length > 0) {
+        const intersectPoint = intersects[0].point;
+        return {
+            x: Math.floor(intersectPoint.x / blockSize),
+            y: Math.floor(intersectPoint.y / blockSize),
+            z: Math.floor(intersectPoint.z / blockSize)
+        };
+    }
+    return null; // No valid placement position
 }
 
 // Function to lock the mouse pointer
@@ -179,6 +236,14 @@ function updatePlayer() {
         camera.position.y = groundHeight + 1.5; // Place the camera on top of the ground
     }
 }
+
+// Toggle inventory with 'E' key
+window.addEventListener('keydown', (event) => {
+    if (event.code === 'KeyE') {
+        inventoryVisible = !inventoryVisible; // Toggle inventory visibility
+        console.log('Inventory:', inventory);
+    }
+});
 
 // Handle window resize
 window.addEventListener('resize', () => {
