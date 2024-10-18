@@ -19,8 +19,6 @@ let inventoryVisible = false;
 // Generate a simple block world using Perlin noise
 let blockSize = 1;
 let renderDistance = 16; // Initial render distance
-const worldWidth = 64;
-const worldHeight = 64;
 const noiseScale = 0.1;
 const simplex = new SimplexNoise();
 
@@ -67,7 +65,7 @@ function generateWorld() {
 generateWorld();
 
 // Position the camera to be just above the ground
-camera.position.set(25, 1.5, 25);
+camera.position.set(0, 1.5, 0); // Start position in the middle of the world
 
 // Player controls
 const playerSpeed = 0.1;
@@ -137,6 +135,7 @@ function updatePlayer() {
         velocity.y = jumpForce;
     }
 
+    // Apply gravity
     if (camera.position.y > 1.5) {
         velocity.y -= 0.01; // Gravity effect
     } else {
@@ -154,8 +153,10 @@ function updatePlayer() {
     camera.position.z += direction.z * -velocity.z;
     camera.position.y += velocity.y;
 
-    camera.position.x = Math.max(0, Math.min(camera.position.x, worldWidth - 1));
-    camera.position.z = Math.max(0, Math.min(camera.position.z, worldHeight - 1));
+    // No boundary constraints
+    // Removed the following boundary constraints
+    // camera.position.x = Math.max(0, Math.min(camera.position.x, worldWidth - 1));
+    // camera.position.z = Math.max(0, Math.min(camera.position.z, worldHeight - 1));
 
     const groundHeight = Math.floor(simplex.noise2D(camera.position.x * noiseScale, camera.position.z * noiseScale) * 5);
     if (camera.position.y < groundHeight + 1.5) {
