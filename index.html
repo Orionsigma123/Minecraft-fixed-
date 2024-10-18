@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mine-Freak</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden; /* Prevent scrolling */
+            background: #87CEEB; /* Sky blue background */
+        }
+        canvas {
+            display: block; /* Remove margins around the canvas */
+        }
+        #renderDistanceUI {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+            font-family: Arial, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <!-- Render Distance Slider UI -->
+    <div id="renderDistanceUI">
+        <label for="renderDistance">Render Distance: <span id="renderDistanceValue">16</span> chunks</label><br>
+        <input type="range" id="renderDistance" min="1" max="32" value="16" step="1">
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.4.0/simplex-noise.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
